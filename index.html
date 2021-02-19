@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nostradamus</title>
+
+    <link href="https://unpkg.com/tailwindcss@^2/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/gh/alpinejs/alpine@v2.x.x/dist/alpine.min.js" defer></script>
+</head>
+<body>
+    <main class="w-screen h-screen" x-data="nostra()" x-init="init()">
+        <template x-if="!asAnswer">
+            <form class="flex items-center justify-center w-full h-full text-white bg-gray-900" method="GET">
+                <label class="text-2xl" for="ask">Dis moi,</label>
+                <input class="ml-2 border-b border-gray-100 bg-gray-900" type="text" value="" id="ask" name="ask" aria-label="Posez votre question" x-ref="question">
+                <button class="ml-2 p-2 rounded border border-gray-100" type="submit" @click="getAnswer($event, $refs.question.value)">Demander</button>
+            </form>
+        </template>
+        <template x-if="asAnswer">
+            <div class="flex flex-col items-center w-full h-full bg-cover" :style="`background-image:url(${gif})`">
+                <button class="absolute right-10 top-10 p-2 rounded bg-white transition duration-200" @click="asAnswer = false">Poser une autre question</button>
+                <h1 class="p-2 w-full text-white text-center text-sm bg-gray-900" x-text="ask"></h1>
+                <p class="my-auto text-7xl uppercase font-bold text-white" x-text="message"></p>
+            </div>
+        </template>
+    </main>
+
+    <script>
+        const nostra = () => {
+            return {
+                asAnswer: false,
+                gif: '',
+                message: '',
+                ask: '',
+                messages: {
+                    yes: ['Absolument', 'Tu peux compter dessus', 'C’est certain', 'Tu peux compter dessus', 'Oui', 'Très probable', 'Sans aucun doute'],
+                    maybe: ['Pas d’avis', 'Peut être', 'Essaye plus tard'],
+                    no: ['Non', 'Peu probable', 'N’y compte pas', 'Impossible']
+                },
+                init: function () {
+                    if(window.location.search) {
+                        const src = decodeURI(window.location.search.match(/\?ask=(.+)/)[1]);
+                        this.getImage(decodeURI(src));
+                    }
+                },
+                getImage: function (ask) {
+                    const random = Math.floor(Math.random() * 10);
+                    const answer = (random < 5) ? 'yes' : (random > 5) ? 'no' : 'maybe';
+                    console.log(random);
+                    console.log(answer);
+
+                    this.ask = ask;
+
+                    fetch(new Request(`https://yesno.wtf/api?force=${answer}`))
+                    .then(response => response.json())
+                    .then(datas => {
+                        this.gif = datas.image;
+                        this.message = this.messages[answer][Math.floor(Math.random() * this.messages[answer].length)];
+                        this.asAnswer = true;
+                    });
+                },
+                getAnswer: function(e, ask) {
+                    this.getImage(ask);
+
+                    //e.preventDefault();
+                    //e.stopPropagation();
+                }
+            }
+        }
+    </script>
+</body>
+</html>
